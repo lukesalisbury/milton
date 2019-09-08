@@ -583,13 +583,10 @@ milton_main(bool is_fullscreen, char* file_to_open)
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, MSAA_NUM_SAMPLES);
     #endif
 
-    Uint32 sdl_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
+    Uint32 sdl_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
 
     if (is_fullscreen) {
         sdl_window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-    }
-    else {
-        sdl_window_flags |= SDL_WINDOW_RESIZABLE;
     }
 
     window = SDL_CreateWindow("Milton",
@@ -601,7 +598,7 @@ milton_main(bool is_fullscreen, char* file_to_open)
         milton_log("SDL Error: %s\n", SDL_GetError());
         milton_die_gracefully("SDL could not create window\n");
     }
-
+    SDL_GetWindowSize(window, &window_width, &window_height);
     platform.window = window;
 
     // Milton works in pixels, but macOS works distinguishing "points" and
@@ -690,9 +687,10 @@ milton_main(bool is_fullscreen, char* file_to_open)
         milton_init(milton, platform.width, platform.height, platform.ui_scale, (PATH_CHAR*)file_to_open_);
         milton->platform = &platform;
         milton->gui->menu_visible = true;
-        if ( is_fullscreen ) {
-            milton->gui->menu_visible = false;
-        }
+        // Note: Custom version, menu is visible on full screen
+        //if ( is_fullscreen ) {
+        //    milton->gui->menu_visible = false;
+        //}
     }
     milton_resize_and_pan(milton, {}, {platform.width, platform.height});
 
