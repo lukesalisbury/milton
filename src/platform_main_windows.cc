@@ -1,5 +1,6 @@
 // Copyright (c) 2015 Sergio Gonzalez. All rights reserved.
 // License: https://github.com/serge-rgb/milton#license
+#include <synchapi.h>
 
 int
 CALLBACK WinMain(HINSTANCE hInstance,
@@ -7,6 +8,7 @@ CALLBACK WinMain(HINSTANCE hInstance,
                  LPSTR lpCmdLine,
                  int nCmdShow)
 {
+	HANDLE unique_mutex = nullptr;
     win32_cleanup_appdata();
     PATH_CHAR path[MAX_PATH] = TO_PATH_STR("milton.log");
     platform_fname_at_config(path, MAX_PATH);
@@ -14,6 +16,7 @@ CALLBACK WinMain(HINSTANCE hInstance,
     char cmd_line[MAX_PATH] = {};
     strncpy(cmd_line, lpCmdLine, MAX_PATH);
 
+	b32 start_running = true;
     bool is_fullscreen = false;
     //TODO: proper cmd parsing
     if ( cmd_line[0] == '-' && cmd_line[1] == 'F' && cmd_line[2] == ' ' ) {
@@ -41,7 +44,22 @@ CALLBACK WinMain(HINSTANCE hInstance,
             }
         }
     }
-
+	if ( cmd_line[0] == '-' && cmd_line[1] == 'U' && cmd_line[2] == ' ' ) {
+		for ( size_t i = 0; cmd_line[i]; ++i) {
+			if ( cmd_line[i + 3] == '\0') {
+				cmd_line[i] = '\0';
+				break;
+			}
+			else {
+				cmd_line[i] = cmd_line[i + 3];
+			}
+		}
+		unique_mutex = CreateMutex( NULL, TRUE, "Milton" );
+		if ( GetLastError() == ERROR_ALREADY_EXISTS )
+		{
+			start_running = false;
+		}
+	}
     if ( cmd_line[0] == '"' && cmd_line[strlen(cmd_line)-1] == '"' ) {
         for ( size_t i = 0; cmd_line[i]; ++i ) {
             cmd_line[i] = cmd_line[i+1];
@@ -56,5 +74,10 @@ CALLBACK WinMain(HINSTANCE hInstance,
     if ( strlen(cmd_line) != 0 ) {
         file_to_open = cmd_line;
     }
-    milton_main(is_fullscreen, file_to_open);
+	if ( start_running ) {
+		milton_main(is_fullscreen, file_to_open);
+	}
+	if ( unique_mutex ) {
+		CloseHandle( unique_mutex );
+	}
 }
