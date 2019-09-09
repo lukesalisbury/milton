@@ -13,69 +13,61 @@ CALLBACK WinMain(HINSTANCE hInstance,
     PATH_CHAR path[MAX_PATH] = TO_PATH_STR("milton.log");
     platform_fname_at_config(path, MAX_PATH);
     g_win32_logfile = platform_fopen(path, TO_PATH_STR("w"));
-    char cmd_line[MAX_PATH] = {};
-    strncpy(cmd_line, lpCmdLine, MAX_PATH);
 
+	char file_to_open[MAX_PATH] = {};
+	char * pfile_to_open;
+	pfile_to_open = file_to_open;
 	b32 start_running = true;
+	b32 load_file = false;
     bool is_fullscreen = false;
     //TODO: proper cmd parsing
-    if ( cmd_line[0] == '-' && cmd_line[1] == 'F' && cmd_line[2] == ' ' ) {
-        is_fullscreen = true;
-        milton_log("Fullscreen is set.\n");
-        for ( size_t i = 0; cmd_line[i]; ++i) {
-            if ( cmd_line[i + 3] == '\0') {
-                cmd_line[i] = '\0';
-                break;
-            }
-            else {
-                cmd_line[i] = cmd_line[i + 3];
-            }
-        }
-    }
-    else if ( cmd_line[0] == '-' && cmd_line[1] == 'F' ) {
-        is_fullscreen = true;
-        milton_log("Fullscreen is set.\n");
-        for ( size_t i = 0; cmd_line[i]; ++i) {
-            if ( cmd_line[i + 2] == '\0') {
-                cmd_line[i] = '\0';
-            }
-            else {
-                cmd_line[i] = cmd_line[i + 2];
-            }
-        }
-    }
-	if ( cmd_line[0] == '-' && cmd_line[1] == 'U' && cmd_line[2] == ' ' ) {
-		for ( size_t i = 0; cmd_line[i]; ++i) {
-			if ( cmd_line[i + 3] == '\0') {
-				cmd_line[i] = '\0';
+	size_t cmd_length = strlen(lpCmdLine);
+	u8 cmd_mode= 0;
+	for (size_t q = 0; q < cmd_length; q++) {
+		switch (cmd_mode) {
+			case 1:
+				if ( lpCmdLine[q] == ' ') {
+					cmd_mode = 0; //reset
+				} else if (lpCmdLine[q] == 'F') {
+					is_fullscreen = true;
+					milton_log("Fullscreen is set.\n");
+				}
+				else if (lpCmdLine[q] == 'U') {
+					unique_mutex = CreateMutex( NULL, TRUE, "MiltonInstance" );
+					if ( GetLastError() == ERROR_ALREADY_EXISTS ) {
+						start_running = false;
+					}
+				} else {
+					cmd_mode = 0; //reset
+				}
 				break;
-			}
-			else {
-				cmd_line[i] = cmd_line[i + 3];
-			}
-		}
-		unique_mutex = CreateMutex( NULL, TRUE, "Milton" );
-		if ( GetLastError() == ERROR_ALREADY_EXISTS )
-		{
-			start_running = false;
+			case 3:
+			case 2: {
+				if ( lpCmdLine[q] == '\\' ) {
+					cmd_mode = 3;
+				} else if ( lpCmdLine[q] == '"') {
+					if (cmd_mode == 2) {
+						cmd_mode = 0; // Reset, end of string
+					}
+				}
+				*pfile_to_open = lpCmdLine[q]; pfile_to_open++;
+
+			} break;
+			default:{
+				if ( lpCmdLine[q] == '-') {
+					cmd_mode = 1; //Argument
+				} else if ( lpCmdLine[q] == '"') {
+					cmd_mode = 2; //String
+					load_file = true;
+					*pfile_to_open = lpCmdLine[q]; pfile_to_open++;
+				}
+			}break;
 		}
 	}
-    if ( cmd_line[0] == '"' && cmd_line[strlen(cmd_line)-1] == '"' ) {
-        for ( size_t i = 0; cmd_line[i]; ++i ) {
-            cmd_line[i] = cmd_line[i+1];
-        }
-        size_t sz = strlen(cmd_line);
-        cmd_line[sz-1] = '\0';
-    }
+	milton_log("CommandLine is %s\n", lpCmdLine);
 
-    // TODO: eat spaces
-    char* file_to_open = NULL;
-    milton_log("CommandLine is %s\n", cmd_line);
-    if ( strlen(cmd_line) != 0 ) {
-        file_to_open = cmd_line;
-    }
 	if ( start_running ) {
-		milton_main(is_fullscreen, file_to_open);
+		milton_main(is_fullscreen, (load_file ? file_to_open : nullptr));
 	}
 	if ( unique_mutex ) {
 		CloseHandle( unique_mutex );
