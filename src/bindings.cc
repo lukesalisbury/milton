@@ -71,7 +71,6 @@ set_default_bindings(MiltonBindings* bs)
     binding(bs, Modifier_NONE, 'i', Action_MODE_EYEDROPPER);
     binding(bs, Modifier_NONE, 'l', Action_MODE_PRIMITIVE);
     binding(bs, Modifier_NONE, Binding::F1, Action_HELP);
-    binding(bs, Modifier_NONE, Binding::F11, Action_FULLSCREEN_TOGGLE);
     binding(bs, Modifier_NONE, '\t', Action_TOGGLE_GUI);
 
     binding(bs, Modifier_NONE, '1', Action_SET_BRUSH_ALPHA_10);
@@ -246,9 +245,6 @@ binding_dispatch_action(BindableAction a, MiltonInput* input, Milton* milton, v2
         } break;
         case Action_HELP: {
             gui_toggle_help(milton->gui);
-        } break;
-        case Action_FULLSCREEN_TOGGLE: {
-            sdl_toggle_fullscreen(milton->platform);
         } break;
         case Action_PEEK_OUT: {
             peek_out_trigger_start(milton);
