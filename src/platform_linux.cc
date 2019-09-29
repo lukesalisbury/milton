@@ -147,6 +147,30 @@ platform_dialog_yesno(char* info, char* title)
     return true;
 }
 
+YesNoCancelAnswer
+platform_dialog_yesnocancel(char* info, char* title);
+{
+    // NOTE: As of 2019-09-23, this function hasn't been tested on Linux.
+
+    platform_cursor_show();
+    GtkWidget *dialog = gtk_message_dialog_new(
+            NULL,
+            (GtkDialogFlags)0,
+            GTK_MESSAGE_QUESTION,
+            GTK_BUTTONS_OK_CANCEL,
+            "%s",
+            info
+            );
+    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    gint answer = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    if ( answer == GTK_RESPONSE_YES )
+        return YesNoCancelAnswer::YES;
+    if ( answer == GTK_RESPONSE_NO )
+        return YesNoCancelAnswer::NO;
+    return YesNoCancelAnswer::CANCEL;
+}
+
 void
 platform_fname_at_config(PATH_CHAR* fname, size_t len)
 {
@@ -182,7 +206,7 @@ platform_fname_at_config(PATH_CHAR* fname, size_t len)
 void
 platform_fname_at_exe(PATH_CHAR* fname, size_t len)
 {
-   // TODO: Fix this
+    // TODO: Fix this
 #if 0
     u32 bufsize = (u32)len;
     char buffer[MAX_PATH] = {};
@@ -304,7 +328,7 @@ platform_get_walltime()
 }
 
 void*
-platform_get_gl_proc(char* name) 
+platform_get_gl_proc(char* name)
 {
     return glXGetProcAddressARB((GLubyte*)name);
 }
